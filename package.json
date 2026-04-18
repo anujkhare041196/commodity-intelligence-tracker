@@ -1,13 +1,22 @@
 {
   "name": "commodity-intelligence-tracker",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Commodity price analytics API — median, avg, min, trends, market dynamics, key suppliers",
+  "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
   },
-  "keywords": [],
+  "keywords": ["commodity", "pricing", "chemicals", "solvents", "API"],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
 }
