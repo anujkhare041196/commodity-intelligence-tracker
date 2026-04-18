@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Commodity Intelligence Tracker</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0b0e1a;
+  --s1:      #131726;
+  --s2:      #1b2035;
+  --s3:      #22273d;
+  --bd:      #252c44;
+  --acc:     #4a8ef5;
+  --pur:     #7c5cfc;
+  --grn:     #2dd4a0;
+  --red:     #f06f6f;
+  --ylw:     #f5b942;
+  --txt:     #dde3f5;
+  --mut:     #6b738f;
+  --r:       12px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  padding: 2rem 1rem 5rem;
+  font-size: 15px;
+}
+
+.wrap { max-width: 960px; margin: 0 auto; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 2.5rem; }
+.header h1 {
+  font-size: 2rem; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(120deg, var(--acc), var(--pur));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.header p { color: var(--mut); margin-top: 0.4rem; font-size: 0.9rem; }
+
+/* Cards */
+.card {
+  background: var(--s1);
+  border: 1px solid var(--bd);
+  border-radius: var(--r);
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1.2rem;
+}
+.clabel {
+  font-size: 0.67rem; text-transform: uppercase;
+  letter-spacing: 1.1px; font-weight: 700; color: var(--mut);
+  margin-bottom: 0.9rem;
+}
+
+/* Form elements */
+.frow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 0.85rem; }
+@media(max-width:600px){ .frow { grid-template-columns: 1fr; } }
+
+label { display: block; font-size: 0.76rem; color: var(--mut); margin-bottom: 0.28rem; }
+
+input, select {
+  width: 100%;
+  background: var(--s2);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  color: var(--txt);
+  font-size: 0.93rem;
+  padding: 0.6rem 0.85rem;
+  outline: none;
+  transition: border-color 0.18s;
+  appearance: none;
+}
+input:focus, select:focus { border-color: var(--acc); }
+input::placeholder { color: var(--mut); }
+select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b738f' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; padding-right: 2.2rem; }
+select option { background: var(--s2); }
+
+.key-note { font-size: 0.71rem; color: var(--mut); margin-top: 0.28rem; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 0.85rem; }
+.chip {
+  background: var(--s2); border: 1px solid var(--bd); border-radius: 999px;
+  font-size: 0.78rem; padding: 0.28rem 0.8rem; color: var(--txt); cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.chip:hover { border-color: var(--acc); color: var(--acc); }
+.chip.active { border-color: var(--acc); background: rgba(74,142,245,0.12); color: var(--acc); font-weight: 600; }
+.chip.builtin::before { content: '★ '; font-size: 0.65rem; }
+
+/* Button */
+.btn {
+  width: 100%; padding: 0.75rem;
+  background: linear-gradient(130deg, var(--acc), var(--pur));
+  border: none; border-radius: 8px; color: #fff;
+  font-size: 0.97rem; font-weight: 700; cursor: pointer;
+  transition: opacity 0.18s;
+}
+.btn:hover:not(:disabled) { opacity: 0.84; }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* Status */
+#status {
+  display: none; border-radius: var(--r);
+  padding: 1rem 1.3rem; font-size: 0.9rem;
+  text-align: center; margin-bottom: 1.2rem;
+}
+#status.loading { display:block; background:var(--s2); color:var(--mut); border:1px solid var(--bd); }
+#status.error { display:block; background:rgba(240,111,111,0.08); color:var(--red); border:1px solid rgba(240,111,111,0.28); }
+.spin { display:inline-block; width:13px; height:13px; border:2px solid var(--mut); border-top-color:var(--acc); border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Results */
+#results { display: none; }
+
+/* Hero row */
+.hero { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.6rem; margin-bottom:1.3rem; }
+.hero h2 { font-size:1.5rem; font-weight:800; letter-spacing:-0.3px; }
+.hero h2 span { color:var(--mut); font-weight:400; font-size:1rem; }
+.hero-badges { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+
+/* Badges */
+.badge {
+  display:inline-block; font-size:0.72rem; font-weight:700;
+  padding:0.22rem 0.68rem; border-radius:999px; text-transform:capitalize; white-space:nowrap;
+}
+.rising,.up,.tight,.buy-now      { background:rgba(240,111,111,0.14); color:var(--red); }
+.falling,.down,.ample,.wait      { background:rgba(45,212,160,0.14); color:var(--grn); }
+.stable,.flat,.balanced,.hedge,
+.spot-preferred,.contract-preferred { background:rgba(245,185,66,0.14); color:var(--ylw); }
+.high-conf { background:rgba(45,212,160,0.14); color:var(--grn); }
+.medium-conf { background:rgba(245,185,66,0.14); color:var(--ylw); }
+.low-conf { background:rgba(240,111,111,0.14); color:var(--red); }
+
+/* Price grid */
+.pgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.7rem; }
+@media(max-width:560px){ .pgrid { grid-template-columns:repeat(2,1fr); } }
+.pcell { background:var(--s2); border-radius:10px; padding:1rem 0.8rem; text-align:center; }
+.pcell .pl { font-size:0.66rem; text-transform:uppercase; letter-spacing:0.9px; color:var(--mut); margin-bottom:0.32rem; }
+.pcell .pv { font-size:1.45rem; font-weight:800; line-height:1.1; }
+.pcell .pu { font-size:0.66rem; color:var(--mut); margin-top:0.18rem; }
+.pcell.hi .pv { color:var(--acc); }
+
+/* Chart */
+.chart-wrap { position:relative; height:240px; }
+
+/* Trend pill inside chart card */
+.trend-row { display:flex; align-items:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:1.1rem; }
+.trend-sum { font-size:0.85rem; color:var(--mut); }
+
+/* Two-col */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+@media(max-width:640px){ .two-col { grid-template-columns:1fr; } }
+
+/* Bullet lists */
+.blist { padding-left: 1.1rem; }
+.blist li { font-size:0.86rem; color:var(--txt); margin-bottom:0.38rem; line-height:1.6; }
+.blist li span.sub { display:block; font-size:0.78rem; color:var(--mut); margin-top:0.1rem; }
+
+/* Supplier table */
+.stbl { width:100%; border-collapse:collapse; }
+.stbl th { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.9px; color:var(--mut); text-align:left; padding-bottom:0.5rem; border-bottom:1px solid var(--bd); font-weight:600; }
+.stbl td { font-size:0.82rem; padding:0.52rem 0; border-bottom:1px solid var(--bd); vertical-align:top; }
+.stbl tr:last-child td { border-bottom:none; }
+.stbl td.share { color:var(--acc); font-weight:600; text-align:right; white-space:nowrap; }
+.stbl td.notes { color:var(--mut); font-size:0.76rem; padding-right:0.5rem; }
+
+/* Intel */
+.intel {
+  background:linear-gradient(135deg,rgba(74,142,245,0.07),rgba(124,92,252,0.07));
+  border:1px solid rgba(74,142,245,0.2); border-radius:10px; padding:1rem 1.15rem;
+}
+.rec-row { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.65rem; font-weight:600; font-size:0.9rem; }
+.rationale { font-size:0.84rem; color:var(--mut); margin-bottom:0.75rem; line-height:1.65; }
+
+/* Spot vs contract table */
+.sv-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; margin-top:0.85rem; }
+@media(max-width:480px){ .sv-grid { grid-template-columns:1fr; } }
+.sv-cell { background:var(--s2); border-radius:8px; padding:0.85rem; }
+.sv-cell h4 { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:0.5rem; }
+.sv-cell h4.spot { color:var(--ylw); }
+.sv-cell h4.contract { color:var(--grn); }
+.sv-cell ul { padding-left:1rem; }
+.sv-cell li { font-size:0.78rem; color:var(--mut); margin-bottom:0.25rem; line-height:1.5; }
+
+/* Disclaimer */
+.disclaimer {
+  margin-top:1.4rem; background:rgba(245,185,66,0.05);
+  border:1px solid rgba(245,185,66,0.18); border-radius:10px;
+  padding:0.8rem 1rem; font-size:0.74rem; color:var(--mut); line-height:1.65; text-align:center;
+}
+.disclaimer strong { color:var(--ylw); }
+
+/* Footer meta */
+.meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.4rem; margin-top:0.6rem; font-size:0.7rem; color:var(--mut); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>Commodity Intelligence Tracker</h1>
+    <p>5-year price trends, market dynamics &amp; buying intelligence for chemicals, APIs &amp; raw materials</p>
+  </div>
+
+  <!-- Form -->
+  <div class="card">
+    <div style="margin-bottom:0.85rem">
+      <div class="clabel" style="margin-bottom:0.5rem">Quick select — built-in data</div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="frow">
+      <div>
+        <label>Commodity</label>
+        <input type="text" id="commodity" placeholder="e.g. Ethanol, Benzene…" />
+      </div>
+      <div>
+        <label>Location</label>
+        <select id="location">
+          <option value="india">India</option>
+          <option value="asiapac">Asia-Pacific</option>
+          <option value="global">Global</option>
+        </select>
+      </div>
+      <div>
+        <label>Gemini API Key <span style="color:var(--mut);font-weight:400">(for custom)</span></label>
+        <input type="password" id="apiKey" placeholder="AIza… (not needed for built-in)" autocomplete="off" />
+      </div>
+    </div>
+
+    <button class="btn" id="searchBtn">Analyze Commodity</button>
+    <div class="key-note" style="margin-top:0.5rem;text-align:center">Built-in commodities (★) load instantly. Custom commodities use Gemini API — key stored in localStorage only.</div>
+  </div>
+
+  <div id="status"></div>
+  <div id="results"></div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+/* ────────────────────────────────────────────────
+   HARDCODED DATA  (INR / kg)
+   Years: 2020 · 2021 · 2022 · 2023 · 2024
+──────────────────────────────────────────────── */
+const DB = {
+  acetone: {
+    name: 'Acetone',
+    cas: '67-64-1',
+    locations: {
+      india: {
+        prices: { median: 68, average: 70.5, min: 52, max: 92 },
+        trend: { direction: 'falling', changePercent: -10.8, period: '12m', summary: 'Prices softening as Chinese imports increase and domestic demand from paint sector plateaus.' },
+        yearly: [52, 68, 92, 74, 63],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'Domestic production led by HPCL-Mittal and SI Group covers ~60% of demand',
+            'Growing Chinese import volumes keeping spot prices suppressed',
+            'Pharma &amp; agrochem sectors driving steady base demand',
+            'Propylene feedstock cost is the primary price driver — watch naphtha crack margins',
+            'Seasonal demand peaks in Q1 (paint season) and Q3 (pharma bulk season)',
+          ],
+          risks: ['Propylene feedstock volatility', 'Rupee depreciation vs USD', 'Anti-dumping duty changes on Chinese imports'],
+        },
+        suppliers: [
+          { name: 'HPCL-Mittal Energy', country: 'India', share: '~22%', notes: 'Domestic refinery byproduct; reliable domestic supply' },
+          { name: 'SI Group India', country: 'India', share: '~18%', notes: 'Phenol-acetone plant in Vapi, Gujarat' },
+          { name: 'Mitsui Chemicals', country: 'Japan / India', share: '~12%', notes: 'Import channel; premium quality' },
+          { name: 'Liaoning Oxiranchem', country: 'China', share: '~15%', notes: 'Low-cost import source; spot availability high' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'With supply ample and prices in a downtrend, spot purchasing at 30–60 day coverage is optimal. Avoid locking long-term contracts at current mid-cycle levels.',
+          tips: [
+            'Leverage Q4 (Oct–Dec) when demand dips — historically 8–12% cheaper than Q1 peaks',
+            'Negotiate price review clauses in any contract tied to propylene/naphtha benchmarks',
+            'Dual-source from domestic suppliers + 1 Chinese importer to maintain price competition',
+            'Watch ICIS propylene spreads — acetone typically lags by 4–6 weeks',
+          ],
+          spot: ['Falling price trend favors short coverage', 'Chinese spot offers 5–10% below domestic list', 'No supply shortage risk — no urgency to contract'],
+          contract: ['Consider 3-month contracts only if volumes > 20 MT/month for freight optimization', 'Useful for pharma companies needing assured GMP-grade supply'],
+        },
+      },
+      asiapac: {
+        prices: { median: 62, average: 64, min: 48, max: 85 },
+        trend: { direction: 'falling', changePercent: -8.2, period: '12m', summary: 'Regional oversupply from Chinese producers weighing on FOB Asia prices.' },
+        yearly: [48, 60, 85, 68, 57],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'China dominates regional supply with cumene-phenol route capacity expansions',
+            'South Korean and Japanese producers facing margin pressure',
+            'Regional demand flat — electronics solvent demand soft post-pandemic',
+            'Taiwan and Vietnam emerging as growth demand centres',
+            'FOB Korea benchmark is primary regional pricing reference',
+          ],
+          risks: ['China export policy shifts', 'Regional freight cost volatility', 'Currency moves (JPY, KRW vs USD)'],
+        },
+        suppliers: [
+          { name: 'Sinopec', country: 'China', share: '~28%', notes: 'Largest regional supplier; multiple plants' },
+          { name: 'LG Chem', country: 'South Korea', share: '~14%', notes: 'Reliable quality; FOB Yeosu benchmark' },
+          { name: 'Mitsui Chemicals', country: 'Japan', share: '~10%', notes: 'Premium-grade, specialty applications' },
+          { name: 'PTT Global Chemical', country: 'Thailand', share: '~8%', notes: 'Growing capacity; competitive on SE Asia freight' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Chinese capacity surplus makes spot buying advantageous. FOB Asia prices expected to remain range-bound ₹55–70/kg through H1.',
+          tips: [
+            'Source directly from Chinese traders for 10–15% below Korean/Japanese producers',
+            'Use quarterly price-linked contracts only for critical process grades',
+            'Monitor propylene-acetone spread on ICIS Asia weekly report',
+            'Build 45-day inventory cover before Q1 demand pickup in Indian subcontinent',
+          ],
+          spot: ['Regional surplus — spot market is a buyers market', 'Multiple competing suppliers = price negotiating power', 'Short 30-day spot coverage recommended'],
+          contract: ['Use annual contracts for GMP/IP-grade only where quality consistency needed', 'Include price cap provisions tied to CFR Asia indices'],
+        },
+      },
+      global: {
+        prices: { median: 58, average: 60, min: 44, max: 80 },
+        trend: { direction: 'stable', changePercent: -2.1, period: '12m', summary: 'Global acetone market near equilibrium; US and EU prices slightly above Asia owing to freight and energy costs.' },
+        yearly: [44, 57, 80, 64, 56],
+        dynamics: {
+          supplyOutlook: 'balanced',
+          points: [
+            'Global capacity ~7.5 MT/year, demand ~6.8 MT/year — mild structural surplus',
+            'US Gulf Coast market tightest — local demand from MMA and bisphenol-A production',
+            'European acetone linked to phenol plants; margins compressed by energy costs',
+            'Middle East low-cost producers (SABIC, SIPCHEM) growing export share',
+            'Global methyl methacrylate (MMA) demand is the single biggest acetone consumption driver',
+          ],
+          risks: ['Energy cost spike in Europe', 'Logistic disruption (Red Sea routing)', 'Demand destruction if MMA producers switch feedstocks'],
+        },
+        suppliers: [
+          { name: 'INEOS Phenol', country: 'Germany / USA', share: '~16%', notes: 'Worlds largest phenol-acetone producer' },
+          { name: 'Sinopec', country: 'China', share: '~18%', notes: 'Dominant Asian exporter' },
+          { name: 'AdvanSix', country: 'USA', share: '~9%', notes: 'Integrated US producer; serves Americas market' },
+          { name: 'SABIC', country: 'Saudi Arabia', share: '~7%', notes: 'Low feedstock cost; competitive on CIF basis' },
+        ],
+        intel: {
+          recommendation: 'hedge',
+          rationale: 'Global market is near balance. A mixed strategy — 50% spot, 50% 6-month fixed-price contract — mitigates volatility while capturing downside if supply loosens.',
+          tips: [
+            'Hedge 40–60% of monthly volumes on 6-month contracts; leave rest for spot',
+            'Benchmark contracts to ICIS Acetone Europe CIF or Asia FOB indices',
+            'Evaluate supplier geography to reduce freight risk (Red Sea, Panama Canal)',
+            'Revisit coverage quarterly as energy cost outlook shifts European production economics',
+          ],
+          spot: ['Buy spot for 40–50% of needs to benefit if prices dip', 'Multiple arbitrage opportunities between regions exist'],
+          contract: ['Lock 50% at current levels as downside risk is limited', 'Prefer 6-month terms over annual — too much uncertainty beyond H1'],
+        },
+      },
+    },
+  },
+
+  toluene: {
+    name: 'Toluene',
+    cas: '108-88-3',
+    locations: {
+      india: {
+        prices: { median: 74, average: 76, min: 58, max: 98 },
+        trend: { direction: 'rising', changePercent: 6.4, period: '12m', summary: 'Tightening domestic supply as refinery output shifts; rising crude costs flowing through.' },
+        yearly: [58, 78, 98, 72, 80],
+        dynamics: {
+          supplyOutlook: 'tight',
+          points: [
+            'Primarily a refinery co-product — Indian refinery utilisation at 95%+ but BTX extraction limited',
+            'Strong demand from TDI (polyurethane), benzene, and agrochemical sectors',
+            'Import duty of 2.5% on toluene imports from non-FTA countries adds to landed cost',
+            'Monsoon season (Jun–Sep) reduces paint/adhesive demand — temporary price dip',
+            'Domestic demand growing at ~4.5% CAGR driven by paints, coatings, adhesives',
+          ],
+          risks: ['Crude oil price spikes directly transmit to toluene', 'Refinery planned shutdowns reduce supply', 'Anti-dumping petition risk on Korean imports'],
+        },
+        suppliers: [
+          { name: 'Indian Oil Corp (IOC)', country: 'India', share: '~30%', notes: 'Largest domestic source; Panipat &amp; Mathura refineries' },
+          { name: 'Reliance Industries', country: 'India', share: '~25%', notes: 'Jamnagar complex; large BTX extraction unit' },
+          { name: 'GS Caltex', country: 'South Korea', share: '~12%', notes: 'Import via Mumbai/Kandla; spot &amp; contract' },
+          { name: 'S-Oil', country: 'South Korea', share: '~8%', notes: 'Competitive FOB Korea pricing' },
+        ],
+        intel: {
+          recommendation: 'contract preferred',
+          rationale: 'Toluene supply is tight domestically and crude oil trajectory points upward. Secure 3–6 month forward contracts now to lock pre-rally pricing.',
+          tips: [
+            'Contract 60–70% of monthly needs on 3–6 month terms before crude moves higher',
+            'Include price escalation clause tied to Brent crude (±10% band before trigger)',
+            'Maintain 45-day strategic inventory as domestic supply disruptions are increasingly common',
+            'Source from both IOC/RIL (domestic) + one Korean import channel for price competition',
+          ],
+          spot: ['Keep 30% spot coverage to capture any refinery destocking discounts', 'Monsoon season (Jul–Aug) often yields 6–9% spot discounts — opportunistic buying window'],
+          contract: ['Lock majority volumes now — prices expected to rise 8–12% if crude sustains above $85/bbl', 'Prefer domestic supply contracts to avoid import duty and freight uncertainty'],
+        },
+      },
+      asiapac: {
+        prices: { median: 68, average: 70, min: 55, max: 90 },
+        trend: { direction: 'rising', changePercent: 5.1, period: '12m', summary: 'Rising crude input costs and robust BTX demand from China driving prices upward in Asia.' },
+        yearly: [55, 72, 90, 68, 74],
+        dynamics: {
+          supplyOutlook: 'balanced',
+          points: [
+            'Asia accounts for ~45% of global toluene consumption',
+            'Chinese gasoline blending demand can swing regional supply significantly',
+            'South Korean and Japanese naphtha crackers key swing producers',
+            'TDI (polyurethane) and benzene derivative demand are primary demand anchors',
+            'Singapore is the regional trading hub — MOPS pricing benchmark',
+          ],
+          risks: ['China gasoline blending policy changes', 'Naphtha cracker margin compression reducing BTX production', 'Seasonal demand swings in construction-linked end markets'],
+        },
+        suppliers: [
+          { name: 'Sinopec / PetroChina', country: 'China', share: '~32%', notes: 'Dominant in regional market; integrated refinery-to-chemical' },
+          { name: 'GS Caltex', country: 'South Korea', share: '~11%', notes: 'FOB Yeosu; strong export programme' },
+          { name: 'Idemitsu Kosan', country: 'Japan', share: '~8%', notes: 'Consistent quality; specialty grades available' },
+          { name: 'Hengli Petrochemical', country: 'China', share: '~9%', notes: 'New large-scale integrated plant — growing export volumes' },
+        ],
+        intel: {
+          recommendation: 'hedge',
+          rationale: 'Upward price momentum but near-term volatility from China gasoline policy makes a blended approach wise. Mix contract and spot.',
+          tips: [
+            'Secure 50% volumes on 3-month contract; buy balance spot',
+            'Watch China National Holiday period (Oct) — refinery scheduling changes affect FOB availability',
+            'Use MOPS toluene quotes as weekly benchmark for spot negotiations',
+            'Buffer 30-day inventory entering Q1 — Chinese New Year disrupts supply chains',
+          ],
+          spot: ['Spot viable for 40–50% of needs', 'Korea FOB spot often 3–5% below contract list in shoulder season'],
+          contract: ['Contract 50% to hedge upside risk from crude rally', 'Quarterly price review terms preferable to annual fixed'],
+        },
+      },
+      global: {
+        prices: { median: 65, average: 67, min: 52, max: 88 },
+        trend: { direction: 'rising', changePercent: 4.0, period: '12m', summary: 'Crude oil price recovery lifting all BTX complex pricing; benzene-toluene spread tightening.' },
+        yearly: [52, 70, 88, 65, 70],
+        dynamics: {
+          supplyOutlook: 'balanced',
+          points: [
+            'Toluene global demand ~27 MT/year; production strongly tied to refinery crude slate',
+            'Benzene demand growth outpacing toluene — toluene-to-benzene disproportionation (TDP) consuming toluene',
+            'US shale-derived BTX competes with Asian and European grades in Atlantic Basin',
+            'Sustainability pressure: some end-users pushing for bio-toluene alternatives (still niche)',
+            'Automotive coatings recovery supporting demand in EU and North America',
+          ],
+          risks: ['Crude oil price collapse', 'Refinery feedstock switches reducing BTX output', 'Regulatory pressure on aromatic solvents in consumer products'],
+        },
+        suppliers: [
+          { name: 'ExxonMobil Chemical', country: 'USA / Global', share: '~14%', notes: 'Major integrated global producer' },
+          { name: 'Sinopec', country: 'China', share: '~20%', notes: 'Dominant Asian exporter to global markets' },
+          { name: 'LyondellBasell', country: 'Netherlands / USA', share: '~9%', notes: 'Integrated olefins and BTX producer' },
+          { name: 'Hanwha Solutions', country: 'South Korea', share: '~7%', notes: 'Competitive export pricing' },
+        ],
+        intel: {
+          recommendation: 'hedge',
+          rationale: 'With crude on an upward trajectory and balanced global supply, hedging 50–60% of needs on 6-month contracts while keeping spot exposure is the prudent global strategy.',
+          tips: [
+            'Tie contract pricing to Platts or ICIS toluene assessments with monthly resets',
+            'Geographically diversify sourcing: US, Korean and Middle East grades offer different risk profiles',
+            'Watch benzene-toluene economics — when spread inverts, TDP units shut → toluene supply rises',
+            'Consider 6-month forward contracts through a commodity trading desk for large volumes',
+          ],
+          spot: ['Spot for 40% of needs to maintain flexibility', 'Atlantic Basin arbitrage opportunities arise quarterly'],
+          contract: ['6-month contracts with Platts-linked pricing recommended for >50 MT/month buyers', 'Annual fixed-price contracts carry too much crude uncertainty — avoid'],
+        },
+      },
+    },
+  },
+
+  'citric-acid': {
+    name: 'Citric Acid',
+    cas: '77-92-9',
+    locations: {
+      india: {
+        prices: { median: 98, average: 100, min: 78, max: 128 },
+        trend: { direction: 'falling', changePercent: -12.3, period: '12m', summary: 'Chinese dumping and subdued domestic F&amp;B demand pulling prices down from 2022 highs.' },
+        yearly: [78, 92, 128, 110, 92],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'India is 90%+ import-dependent — China supplies ~85% of global citric acid',
+            'Domestic producers (Jungbunzlauer India) small-scale; cannot influence pricing',
+            'F&amp;B sector accounts for ~60% demand; pharma excipient use growing',
+            'Anti-dumping duties on Chinese citric acid have lapsed — imports surging',
+            'New Chinese capacity (COFCO, TTCA expansions) keeping global prices depressed',
+          ],
+          risks: ['Reinstatement of anti-dumping duties would spike prices 20–35% overnight', 'China export tax or quota changes', 'Quality adulteration in low-cost imports'],
+        },
+        suppliers: [
+          { name: 'COFCO Biochemical', country: 'China', share: '~30%', notes: 'Worlds largest producer; food &amp; pharma grades' },
+          { name: 'TTCA Co. Ltd', country: 'China', share: '~20%', notes: 'Large fermentation capacity; competitive pricing' },
+          { name: 'Jungbunzlauer', country: 'Austria / India', share: '~8%', notes: 'Premium EU-origin grade; pharma/USP quality' },
+          { name: 'Archer Daniels Midland (ADM)', country: 'USA', share: '~6%', notes: 'US-origin for regulated pharma applications' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Prices are falling and supply is ample. Build inventory opportunistically but avoid long-term contracts at current levels — risk of further downside is significant.',
+          tips: [
+            'Exploit falling prices: purchase 60–90 day inventory cover at spot during low-demand periods',
+            'Track anti-dumping petition filings at DGTR India — early signal of price spike risk',
+            'Qualify at least one non-Chinese source (ADM, Jungbunzlauer) as a backup at premium',
+            'Negotiate annual contracts only if buyer can extract 5–8% below spot as volume discount',
+          ],
+          spot: ['Clearly a buyers market — spot favored for 70–80% of procurement', 'Chinese suppliers offering extended credit (60–90 days) to move volume — leverage this'],
+          contract: ['Contract only for pharma-grade USP/BP where supply continuity is mandatory', 'Include anti-dumping duty trigger clause: if duties reinstated, price reverts to pre-duty baseline'],
+        },
+      },
+      asiapac: {
+        prices: { median: 90, average: 92, min: 72, max: 118 },
+        trend: { direction: 'falling', changePercent: -11.0, period: '12m', summary: 'Chinese domestic overproduction flowing into regional markets; FOB China prices at multi-year lows.' },
+        yearly: [72, 85, 118, 100, 84],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'China produces ~75% of global citric acid — Asia-Pacific is a net export region',
+            'Southeast Asian food processing sector key demand growth driver',
+            'India and Indonesia are largest import markets in the region',
+            'China's corn-based fermentation gives structural cost advantage',
+            'New capacity from COFCO (600 KT/year) adding to regional oversupply',
+          ],
+          risks: ['China export restrictions or VAT rebate removal', 'Currency movement (CNY depreciation = lower USD prices)', 'Food safety incidents at Chinese plants'],
+        },
+        suppliers: [
+          { name: 'COFCO Biochemical', country: 'China', share: '~32%', notes: 'Price setter for Asia-Pacific market' },
+          { name: 'TTCA / Weifang Ensign', country: 'China', share: '~22%', notes: 'Aggressive spot pricing; large export focus' },
+          { name: 'Shandong Juxian', country: 'China', share: '~10%', notes: 'Mid-tier producer; food grade' },
+          { name: 'Jungbunzlauer', country: 'Austria', share: '~5%', notes: 'Premium import for high-purity applications' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Regional oversupply is structural. Spot purchasing with 60-day coverage is optimal. Contracts only make sense for buyers needing guaranteed quality specifications.',
+          tips: [
+            'Buy 60–90 day spot positions and roll — prices likely range-bound ₹80–95/kg near-term',
+            'Negotiate free-on-board (FOB) terms to control freight and insurance',
+            'Maintain dual-supplier policy: two Chinese sources minimises single-supplier risk',
+            'Pressure test all suppliers for USP/BP/E330 certificates — quality risk highest with new entrants',
+          ],
+          spot: ['Spot market highly liquid — no scarcity premium', 'Multiple Chinese suppliers compete aggressively for volume'],
+          contract: ['Use annual frame contracts for USP-grade only', 'Cap price at 5% above rolling 90-day average spot'],
+        },
+      },
+      global: {
+        prices: { median: 85, average: 87, min: 68, max: 112 },
+        trend: { direction: 'falling', changePercent: -9.5, period: '12m', summary: 'Global citric acid in a structural oversupply cycle driven by Chinese capacity expansion.' },
+        yearly: [68, 80, 112, 96, 82],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'Global capacity ~3 MT/year vs demand ~2.4 MT/year — significant structural surplus',
+            'China accounts for 75% production; EU (Jungbunzlauer, Citrique Belge) is secondary',
+            'Food &amp; beverage accounts for ~65% of global demand; cleaners/detergents ~20%',
+            'EU anti-dumping measures on Chinese citric acid keep European prices elevated vs Asia',
+            'Bio-based and local-source trends creating small premium market segment',
+          ],
+          risks: ['EU anti-dumping review outcomes', 'China feedstock (corn, cassava) cost spikes', 'Bio-based alternatives gaining share in premium segment'],
+        },
+        suppliers: [
+          { name: 'COFCO Biochemical', country: 'China', share: '~28%', notes: 'Global price setter' },
+          { name: 'Jungbunzlauer', country: 'Austria / Switzerland', share: '~12%', notes: 'Premium EU-origin; pharma and food grades' },
+          { name: 'Citrique Belge (ADM)', country: 'Belgium', share: '~8%', notes: 'Key EU supplier; non-Chinese alternative' },
+          { name: 'TTCA', country: 'China', share: '~18%', notes: 'Aggressive exporter; food and industrial grades' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Structural global oversupply means buyers hold the cards. Spot purchasing for commodity grades; premium contracts only for regulated pharma/food applications needing EU or US origin.',
+          tips: [
+            'Buy spot for industrial and food-grade — ample availability, no urgency',
+            'For EU/US-origin requirements (regulatory), contract with Jungbunzlauer/ADM 6–12 months ahead',
+            'Monitor anti-dumping duty changes in EU and USA — can reprice market within weeks',
+            'Evaluate cleaning &amp; detergent grades — often 15–20% cheaper than food-grade despite similar purity',
+          ],
+          spot: ['Structural buyers market — spot for 70%+ of volumes', 'Chinese FOB spot offers consistently below non-Chinese contract prices'],
+          contract: ['Contract EU-origin material for compliance-critical applications only', 'Annual contract volumes: negotiate at least 12% below list price for >50 MT/month'],
+        },
+      },
+    },
+  },
+
+  glycerol: {
+    name: 'Glycerol (Glycerin)',
+    cas: '56-81-5',
+    locations: {
+      india: {
+        prices: { median: 82, average: 85, min: 62, max: 115 },
+        trend: { direction: 'stable', changePercent: 1.8, period: '12m', summary: 'Prices broadly flat — biodiesel byproduct supply balancing pharma and personal care demand growth.' },
+        yearly: [62, 78, 115, 88, 82],
+        dynamics: {
+          supplyOutlook: 'balanced',
+          points: [
+            'Glycerol is a biodiesel byproduct — supply directly linked to biodiesel blending mandates (B20 target)',
+            'India is a net importer of refined/USP glycerol for pharma applications',
+            'Growing domestic demand from personal care, food, pharma, and e-cigarette formulations',
+            'Crude glycerol (80%) significantly cheaper than refined (99.7%) — process cost is key differentiator',
+            'Malaysia and Indonesia palm-based glycerol is largest import source',
+          ],
+          risks: ['Biodiesel mandate revisions affect supply volumes', 'Palm oil price impacts glycerol cost in SE Asia', 'Quality fraud — crude glycerol sold as refined grade'],
+        },
+        suppliers: [
+          { name: 'Godrej Industries', country: 'India', share: '~20%', notes: 'Oleochemical route; consistent pharma-grade supply' },
+          { name: 'Emami Agrotech', country: 'India', share: '~12%', notes: 'Integrated oleochemical plant' },
+          { name: 'IOI Oleochemicals', country: 'Malaysia', share: '~15%', notes: 'Palm-based refined glycerol; USP/BP grade available' },
+          { name: 'KLK Oleochemicals', country: 'Malaysia', share: '~12%', notes: 'Large palm refiner; competitive CIF India pricing' },
+        ],
+        intel: {
+          recommendation: 'hedge',
+          rationale: 'With prices stable and both upside (pharma demand) and downside (biodiesel supply surge) risks present, a blended strategy is prudent.',
+          tips: [
+            'Split 50% contract (domestic supplier for USP grade) / 50% spot (imported for industrial grade)',
+            'Track Malaysian palm oil prices weekly — glycerol follows with 4–8 week lag',
+            'Ensure supplier COA includes 99.7% purity, heavy metals, and chlorinated compounds for pharma use',
+            'Build 60-day strategic stock of pharma-grade — supply disruptions are infrequent but costly',
+          ],
+          spot: ['Industrial &amp; cosmetic grades — ample spot availability from importers', 'Spot buying viable in Q3 when biodiesel production peaks and byproduct glycerol is abundant'],
+          contract: ['Pharma-grade USP/BP: always contract with approved supplier for continuity', '6-month contracts with domestic oleochemical companies preferred for GMP traceability'],
+        },
+      },
+      asiapac: {
+        prices: { median: 74, average: 76, min: 58, max: 105 },
+        trend: { direction: 'stable', changePercent: 0.9, period: '12m', summary: 'Southeast Asian palm-based glycerol supply abundant; prices stable with mild seasonal variations.' },
+        yearly: [58, 70, 105, 82, 76],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'Malaysia and Indonesia dominate — palm oil processing creates large glycerol byproduct volumes',
+            'Regional biodiesel mandates (B30 in Indonesia, B20 in Malaysia) generating more crude glycerol',
+            'China and India are the largest regional import destinations',
+            'Oleochemical hub in Pasir Gudang (Malaysia) is regional price reference point',
+            'Growing personal care demand in SE Asia absorbing incremental supply',
+          ],
+          risks: ['Palm oil supply disruption (weather, labour)', 'Indonesia/Malaysia biodiesel mandate changes', 'China demand slowdown'],
+        },
+        suppliers: [
+          { name: 'IOI Oleochemicals', country: 'Malaysia', share: '~18%', notes: 'Worlds largest oleochemical producer; multiple grades' },
+          { name: 'KLK Oleochemicals', country: 'Malaysia', share: '~14%', notes: 'Vertically integrated; competitive CIF pricing' },
+          { name: 'Wilmar International', country: 'Singapore / Regional', share: '~16%', notes: 'Largest agri-commodities trader; glycerol trading arm' },
+          { name: 'Musim Mas', country: 'Indonesia', share: '~10%', notes: 'Palm-based; growing refined glycerol capacity' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Regional supply is ample and growing. Spot purchasing with 60-day coverage is cost-optimal for most industrial and personal care buyers.',
+          tips: [
+            'Negotiate directly with Malaysian oleochemical producers for large volumes — cut out traders',
+            'Q4 tends to be cheapest — palm oil harvest peaks Oct–Nov, flooding glycerol supply',
+            'Specify 99.5%+ refined grade minimum — cheaper crude grades have disposal costs',
+            'Join a purchasing consortium if buying < 5 MT/month to access better CIF terms',
+          ],
+          spot: ['Buyers market — spot covers 70%+ of needs efficiently', 'Multiple Malaysian/Indonesian suppliers compete for volume'],
+          contract: ['Contract only for pharma/USP-grade with GMP-certified suppliers', 'Include quality penalty clauses — adulteration risk real in lower-tier suppliers'],
+        },
+      },
+      global: {
+        prices: { median: 70, average: 72, min: 54, max: 98 },
+        trend: { direction: 'stable', changePercent: -1.2, period: '12m', summary: 'Global glycerol in structural surplus from biodiesel expansion; prices expected to remain range-bound.' },
+        yearly: [54, 66, 98, 78, 72],
+        dynamics: {
+          supplyOutlook: 'ample',
+          points: [
+            'Global glycerol production ~5 MT/year — overwhelmingly a biodiesel byproduct (70%+)',
+            'European biodiesel mandates have created a structural surplus of crude glycerol',
+            'Refined glycerol (pharma-grade) commands 40–60% premium over crude',
+            'Personal care and pharma sectors absorbing growth; industrial cleaning demand stable',
+            'Bio-PDO and bio-butanol — new fermentation routes consuming glycerol as feedstock',
+          ],
+          risks: ['Biodiesel policy rollback would tighten supply significantly', 'Energy transition reducing fossil diesel → impacts biodiesel → impacts glycerol', 'Refined capacity bottleneck in some regions'],
+        },
+        suppliers: [
+          { name: 'IOI / KLK (Malaysia)', country: 'Malaysia', share: '~18%', notes: 'Palm-based; dominant global exporters' },
+          { name: 'P&G Chemicals', country: 'USA', share: '~8%', notes: 'USP-grade for pharmaceutical applications' },
+          { name: 'Emery Oleochemicals', country: 'Malaysia / Germany', share: '~7%', notes: 'Specialty grades; sustainable sourced options' },
+          { name: 'Cargill', country: 'USA / Global', share: '~9%', notes: 'Soy-based glycerol; US and EU grades' },
+        ],
+        intel: {
+          recommendation: 'spot preferred',
+          rationale: 'Structural global surplus keeps glycerol a buyers market. Spot for commodity grades; contracts only for specialty and regulated applications.',
+          tips: [
+            'Spot buying covers industrial, cosmetic, and food grades efficiently',
+            'For pharma USP/BP: contract with audited GMP-certified supplier regardless of cost',
+            'Evaluate bio-based glycerol for ESG reporting — growing customer/regulatory interest',
+            'Monitor EU biodiesel policy: any mandate increase → more glycerol supply → lower prices',
+          ],
+          spot: ['Global commodity glycerol — abundant, spot preferred for 65–75% of volumes', 'Trader competition in Rotterdam and Singapore keeps spot prices competitive'],
+          contract: ['USP/BP and EP grade: always on contract with approved supplier for supply security', '6-month rolling contracts with 30-day price notice clauses recommended'],
+        },
+      },
+    },
+  },
+};
+
+/* ── UI setup ── */
+const BUILTIN = [
+  { key: 'acetone',    label: 'Acetone' },
+  { key: 'toluene',   label: 'Toluene' },
+  { key: 'citric-acid', label: 'Citric Acid' },
+  { key: 'glycerol',  label: 'Glycerol' },
+];
+
+const CUSTOM_CHIPS = [
+  { label: 'Ethanol', loc: 'india' },
+  { label: 'Methanol', loc: 'asiapac' },
+  { label: 'Benzene', loc: 'global' },
+  { label: 'IPA', loc: 'india' },
+];
+
+const chipContainer = document.getElementById('chips');
+let activeChip = null;
+let chartInst = null;
+
+BUILTIN.forEach(({ key, label }) => {
+  const el = document.createElement('span');
+  el.className = 'chip builtin';
+  el.textContent = label;
+  el.dataset.key = key;
+  el.onclick = () => {
+    setActiveChip(el);
+    document.getElementById('commodity').value = label;
+    runSearch();
+  };
+  chipContainer.appendChild(el);
+});
+
+const divider = document.createElement('span');
+divider.style.cssText = 'align-self:center;font-size:0.7rem;color:var(--mut);padding:0 0.2rem';
+divider.textContent = '·  via Gemini:';
+chipContainer.appendChild(divider);
+
+CUSTOM_CHIPS.forEach(({ label, loc }) => {
+  const el = document.createElement('span');
+  el.className = 'chip';
+  el.textContent = label;
+  el.onclick = () => {
+    setActiveChip(el);
+    document.getElementById('commodity').value = label;
+    document.getElementById('location').value = loc;
+  };
+  chipContainer.appendChild(el);
+});
+
+function setActiveChip(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeChip = el;
+}
+
+/* ── Persist API key ── */
+const keyInput = document.getElementById('apiKey');
+keyInput.value = localStorage.getItem('gemini_key') || '';
+keyInput.addEventListener('change', () => localStorage.setItem('gemini_key', keyInput.value.trim()));
+
+document.getElementById('searchBtn').addEventListener('click', runSearch);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('searchBtn').disabled) runSearch();
+});
+
+/* ── Location change: re-render if built-in active ── */
+document.getElementById('location').addEventListener('change', () => {
+  const commodity = document.getElementById('commodity').value.trim().toLowerCase().replace(/\s+/g, '-');
+  if (DB[commodity]) runSearch();
+});
+
+/* ── Search ── */
+async function runSearch() {
+  const rawCommodity = document.getElementById('commodity').value.trim();
+  const location     = document.getElementById('location').value;
+  const btn          = document.getElementById('searchBtn');
+  const statusEl     = document.getElementById('status');
+  const resultsEl    = document.getElementById('results');
+
+  if (!rawCommodity) return showErr('Enter a commodity name.');
+
+  const dbKey = rawCommodity.toLowerCase().replace(/\s+/g, '-');
+
+  if (DB[dbKey]) {
+    statusEl.style.display = 'none';
+    resultsEl.style.display = 'none';
+    try {
+      render(DB[dbKey].name, location, DB[dbKey].locations[location], DB[dbKey]);
+    } catch (err) {
+      showErr('Render error: ' + err.message);
+    }
+    return;
+  }
+
+  // Custom — call Gemini
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) return showErr('Enter your Gemini API key for custom commodities.');
+
+  btn.disabled = true;
+  resultsEl.style.display = 'none';
+  statusEl.className = 'loading';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<span class="spin"></span>Fetching commodity intelligence via Gemini…';
+
+  const locLabel = { india: 'India', asiapac: 'Asia-Pacific', global: 'Global' }[location];
+
+  const prompt = `You are a commodity pricing analyst. Analyze "${rawCommodity}" in "${locLabel}".
+
+Return ONLY a raw JSON object — no markdown, no explanation. Schema:
+
+{
+  "prices": { "median": number, "average": number, "min": number, "max": number },
+  "trend": { "direction": "rising|falling|stable", "changePercent": number, "period": "12m", "summary": "one sentence" },
+  "yearly": [number, number, number, number, number],
+  "dynamics": {
+    "supplyOutlook": "tight|ample|balanced",
+    "points": ["string x5"],
+    "risks": ["string x3"]
+  },
+  "suppliers": [
+    { "name": "string", "country": "string", "share": "string", "notes": "string" }
+  ],
+  "intel": {
+    "recommendation": "buy now|wait|hedge|spot preferred|contract preferred",
+    "rationale": "1-2 sentences",
+    "tips": ["string x4"],
+    "spot": ["string x3 — when spot buying makes sense"],
+    "contract": ["string x3 — when contracts make sense"]
+  },
+  "confidence": "high|medium|low"
+}
+
+Rules:
+- All prices in INR per kg (realistic current market values).
+- yearly array = INR/kg annual averages for 2020, 2021, 2022, 2023, 2024.
+- Include 4-5 real suppliers with actual company names.
+- Return only the JSON object.`;
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3, maxOutputTokens: 2000 }
+      })
+    });
+
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e?.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    let raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    const parsed = JSON.parse(raw);
+
+    statusEl.style.display = 'none';
+    const synth = {
+      name: rawCommodity,
+      locations: { [location]: { ...parsed, dynamics: parsed.dynamics } }
+    };
+    render(rawCommodity, location, parsed, synth);
+  } catch (e) {
+    showErr(e.message || 'Unexpected error. Check your Gemini API key.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('status');
+  el.className = 'error';
+  el.style.display = 'block';
+  el.textContent = '⚠ ' + msg;
+  document.getElementById('searchBtn').disabled = false;
+}
+
+/* ── Render ── */
+function render(name, locationKey, loc, meta) {
+  const el = document.getElementById('results');
+  const p  = loc.prices || {};
+  const t  = loc.trend || {};
+  const d  = loc.dynamics || {};
+  const s  = loc.suppliers || [];
+  const b  = loc.intel || {};
+  const yr = loc.yearly || [];
+  const conf = (loc.confidence || 'medium');
+
+  const locLabel = { india: 'India', asiapac: 'Asia-Pacific', global: 'Global' }[locationKey] || locationKey;
+  const tdir = slug(t.direction || 'stable');
+  const sol  = slug(d.supplyOutlook || 'balanced');
+  const rec  = slug(b.recommendation || '');
+  const chgSign = (t.changePercent || 0) > 0 ? '+' : '';
+
+  const suppRows = s.map(r => `
+    <tr>
+      <td><strong>${x(r.name)}</strong><br><span style="color:var(--mut);font-size:0.73rem">${x(r.country)}</span></td>
+      <td class="notes">${x(r.notes)}</td>
+      <td class="share">${x(r.share)}</td>
+    </tr>`).join('');
+
+  const dynPoints = (d.points || []).map(v => `<li>${v}</li>`).join('');
+  const risks     = (d.risks || []).map(v => `<li>${v}</li>`).join('');
+  const tips      = (b.tips || []).map(v => `<li>${v}</li>`).join('');
+  const spotPts   = (b.spot || []).map(v => `<li>${v}</li>`).join('');
+  const contPts   = (b.contract || []).map(v => `<li>${v}</li>`).join('');
+
+  el.innerHTML = `
+    <div class="hero">
+      <h2>${x(name)} <span>· ${x(locLabel)}</span></h2>
+      <div class="hero-badges">
+        <span class="badge ${tdir}">${x(t.direction || 'stable')} trend</span>
+        <span class="badge ${sol}">${x(d.supplyOutlook || 'balanced')} supply</span>
+        <span class="badge ${conf}-conf">confidence: ${x(conf)}</span>
+      </div>
+    </div>
+
+    <!-- Prices -->
+    <div class="card">
+      <div class="clabel">Price Overview — INR / kg</div>
+      <div class="pgrid">
+        <div class="pcell hi">
+          <div class="pl">Median</div>
+          <div class="pv">${inr(p.median)}</div>
+          <div class="pu">per kg</div>
+        </div>
+        <div class="pcell">
+          <div class="pl">Average</div>
+          <div class="pv">${inr(p.average)}</div>
+          <div class="pu">per kg</div>
+        </div>
+        <div class="pcell">
+          <div class="pl">Min</div>
+          <div class="pv">${inr(p.min)}</div>
+          <div class="pu">per kg</div>
+        </div>
+        <div class="pcell">
+          <div class="pl">Max</div>
+          <div class="pv">${inr(p.max)}</div>
+          <div class="pu">per kg</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5-year chart -->
+    <div class="card">
+      <div class="clabel">5-Year Price Trend (INR / kg)</div>
+      <div class="trend-row" style="margin-bottom:1.1rem">
+        <span class="badge ${tdir}" style="font-size:0.82rem;padding:0.28rem 0.8rem">${chgSign}${t.changePercent ?? 0}% over ${x(t.period || '12m')}</span>
+        <span style="font-size:0.84rem;color:var(--mut)">${x(t.summary)}</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="priceChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Dynamics + Suppliers -->
+    <div class="two-col">
+      <div class="card">
+        <div class="clabel">Market Dynamics</div>
+        <ul class="blist" style="margin-bottom:1rem">${dynPoints}</ul>
+        <div class="clabel" style="margin-top:0.6rem">Key Risks</div>
+        <ul class="blist">${risks}</ul>
+      </div>
+      <div class="card">
+        <div class="clabel">Key Suppliers</div>
+        <table class="stbl">
+          <thead><tr><th>Supplier</th><th>Notes</th><th style="text-align:right">Share</th></tr></thead>
+          <tbody>${suppRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Buying intelligence -->
+    <div class="card">
+      <div class="clabel">Buying Intelligence</div>
+      <div class="intel">
+        <div class="rec-row">
+          Recommendation: <span class="badge ${rec}">${x(b.recommendation)}</span>
+        </div>
+        <div class="rationale">${x(b.rationale)}</div>
+        <ul class="blist" style="margin-bottom:1.1rem">${tips}</ul>
+        <div class="sv-grid">
+          <div class="sv-cell">
+            <h4 class="spot">Spot Buying — When it makes sense</h4>
+            <ul>${spotPts}</ul>
+          </div>
+          <div class="sv-cell">
+            <h4 class="contract">Contracts — When it makes sense</h4>
+            <ul>${contPts}</ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <strong>⚠ AI Estimates &amp; Market Intelligence Only.</strong>
+      Built-in data is based on publicly available market research and may not reflect real-time prices.
+      Custom commodity data is AI-generated by Gemini 2.0 Flash. Always verify with your suppliers, commodity brokers,
+      or professional pricing services (ICIS, ChemAnalyst, Platts) before procurement decisions.
+    </div>
+
+    <div class="meta">
+      <span>${meta.cas ? `CAS: ${x(meta.cas)}` : 'Custom analysis via Gemini 2.0 Flash'}</span>
+      <span>Generated ${new Date().toLocaleString('en-IN')}</span>
+    </div>
+  `;
+
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Small delay lets the browser compute canvas dimensions before Chart.js reads them
+  setTimeout(() => drawChart(name, yr, t.direction), 50);
+}
+
+/* ── Chart ── */
+function drawChart(name, yearly, direction) {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded — chart skipped');
+    return;
+  }
+  const canvas = document.getElementById('priceChart');
+  if (!canvas) return;
+
+  if (chartInst) { chartInst.destroy(); chartInst = null; }
+
+  const years = ['2020', '2021', '2022', '2023', '2024'];
+  const color  = direction === 'rising' ? '#f06f6f' : direction === 'falling' ? '#2dd4a0' : '#f5b942';
+  const ctx    = canvas.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0, color + '33');
+  grad.addColorStop(1, color + '00');
+
+  chartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [{
+        label: 'INR / kg',
+        data: yearly,
+        borderColor: color,
+        backgroundColor: grad,
+        borderWidth: 2.5,
+        pointBackgroundColor: color,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: true,
+        tension: 0.38,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1b2035',
+          borderColor: '#252c44',
+          borderWidth: 1,
+          titleColor: '#dde3f5',
+          bodyColor: '#6b738f',
+          callbacks: {
+            label: ctx => ` ₹${ctx.parsed.y.toFixed(2)} / kg`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#252c44' },
+          ticks: { color: '#6b738f', font: { size: 12 } },
+        },
+        y: {
+          grid: { color: '#252c44' },
+          ticks: {
+            color: '#6b738f',
+            font: { size: 12 },
+            callback: v => '₹' + v,
+          },
+        }
+      }
+    }
+  });
+}
+
+/* ── Helpers ── */
+function inr(n) {
+  if (n == null || isNaN(n)) return '—';
+  return '₹' + Number(n).toFixed(0);
+}
+
+function slug(s) {
+  return String(s || '').toLowerCase().replace(/[\s/]+/g, '-');
+}
+
+function x(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&(?!amp;)/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
